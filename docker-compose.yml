@@ -1,0 +1,52 @@
+version: '3,8'
+services:
+  api:
+    image: kubedevio/pedelogo-catalogo:v1.0.0
+    ports:
+      - "8080:80"
+    networks: 
+      - pedelogo
+    depends_on:
+      - pedelogo-mongo
+    environment:
+      Mongo__Host: "pedelogo-mongo"
+      Mongo__User: "mongouser"
+      Mongo__Password: "mongopwd"
+      Mongo__Port: "27017"
+      Mongo__Database: "admin"
+
+  pedelogo-mongo:
+    image: mongo:4.4.2
+    ports:
+      - "27017:27017"
+    networks: 
+      - pedelogo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongouser
+      MONGO_INITDB_ROOT_PASSWORD: mongopwd
+
+  mongoexporter:
+    image: fabricioveronez/mongo_exporter
+    ports:
+      - "9216:9216"
+    networks: 
+      - pedelogo
+    depends_on:
+      - pedelogo-mongo
+    environment:
+      MONGODB_URI: "mongodb://mongouser:mongopwd@pedelogo-mongo:27017"
+  
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    networks: 
+      - pedelogo
+
+networks:
+  pedelogo:
+    driver: bridge
