@@ -17,6 +17,8 @@ services:
 
   pedelogo-mongo:
     image: mongo:4.4.2
+    volumes:
+      - db_mongo:/data/db
     ports:
       - "27017:27017"
     networks: 
@@ -40,12 +42,27 @@ services:
     image: prom/prometheus:v3.7.3
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
     ports:
       - "9090:9090"
     depends_on:
       - api
     networks: 
       - pedelogo
+
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager.yml:/prometheus/alertmanager.yml
+    command:
+      - "--config.file=/prometheus/alertmanager.yml"
+    networks: 
+      - pedelogo
+
+volumes:
+  db_mongo: 
 
 networks:
   pedelogo:
